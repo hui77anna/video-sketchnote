@@ -1,0 +1,28 @@
+{
+  "name": "video-sketchnote",
+  "version": "1.0.0",
+  "description": "把视频/播客 URL 一键变成手绘风格总结图片 — 复刻 ChatGPT 网页生图体验。Claude Code skill 或独立 Node 脚本两种用法。",
+  "type": "commonjs",
+  "main": "scripts/generate.js",
+  "scripts": {
+    "generate": "node scripts/generate.js",
+    "prepare-workflow": "node scripts/prepare.js",
+    "automate": "node scripts/automate.js"
+  },
+  "keywords": [
+    "chatgpt",
+    "openai",
+    "gpt-image",
+    "sketchnote",
+    "video-summary",
+    "claude-code-skill"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.59.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
