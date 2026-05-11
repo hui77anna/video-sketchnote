@@ -1,33 +1,33 @@
 ---
 name: video-sketchnote
-description: 给视频 URL（YouTube/B站/抖音/小红书/播客/微信视频号）自动生成手绘总结图片。复刻 ChatGPT 网页生图体验 — 调 NeuraRead API 拿章节内容，再用 OpenAI Responses API（GPT-5 + image_generation tool，底层 gpt-image-1）出图。触发：用户给视频链接 + 说"生成手绘总结"、"画成手绘笔记"、"video sketchnote"、"复刻 ChatGPT 生图"，或直接 /video-sketchnote <url>。
+description: 把视频 URL 或本地 PDF 文件自动生成手绘总结图片。视频走 NeuraRead API（YouTube/B站/抖音/小红书/播客/微信视频号），PDF 走 LlamaParse v2，统一用 GPT-5 + gpt-image-2 出图。触发：用户给视频链接或 PDF 路径 + 说"生成手绘总结"、"画成手绘笔记"、"video sketchnote"、"复刻 ChatGPT 生图"，或直接 /video-sketchnote <url-or-pdf>。
 ---
 
-# 视频手绘总结生成 Skill
+# 视频/PDF 手绘总结生成 Skill
 
 ## 用途
-用户提供一个视频/播客 URL → 自动产出一张手绘风格的总结图片（小红书手账、ChatGPT 视觉总结风），保存到 ~/Downloads/。
+两种输入模式：
+- **视频/播客 URL** → 调 NeuraRead 拿章节 → 出手绘总结图
+- **本地 PDF 文件路径** → 调 LlamaParse v2 拿 markdown → GPT-5 提章节 → 出手绘总结图
+
+输出统一保存到 `~/Downloads/`。
 
 ## 必需环境
-- `OPENAI_API_KEY` 在 shell env（账号需开通 gpt-5 / image_generation tool）
-- `node` 已安装
+- `OPENAI_API_KEY` 在 shell env（账号需开通 gpt-5 / gpt-image-2）
+- `LLAMA_CLOUD_API_KEY` 在 shell env（**仅 PDF 模式需要**，去 https://cloud.llamaindex.ai 申请，免费 1000 页/月）
+- `node` >= 18 已安装
 
-## 关键：放一张参考样图
-**ChatGPT 网页生图效果好，是因为对话历史里有参考样图。** 想复刻那个效果，就把一张你喜欢的样图（小红书手账、ChatGPT 之前出的好图等）保存到：
+## 参考样图（已内嵌，不要改）
 
-```
-~/.claude/skills/video-sketchnote/reference.png
-```
+`~/.claude/skills/video-sketchnote/reference.png` 是 skill 内嵌的统一风格参考图，**不要替换**——分发版本用这张图保证所有用户出图风格一致。
 
-（也可以用 .jpg / .jpeg / .webp）
+脚本自动读取它，转 base64 data URI 喂给 GPT-5，GPT-5 模仿其颜色、布局、卡通度、字体感。
 
-脚本会自动读取这个文件，转 base64 data URI，跟视频内容一起喂给 GPT-5。GPT-5 看到示范图后会模仿其整体风格 — 颜色、布局、卡通度、字体感。
+如果参考图被误删，出图会跑偏（英文标题、少彩色、信息密度低）。重新装一遍 skill 包即可恢复。
 
-如果不放参考图，纯文字 prompt 出来的效果会跑偏（比如英文标题、少彩色、信息密度低）。
+## 三种工作模式
 
-## 两种工作模式
-
-### A. 工作流模式（推荐 — 直接用 ChatGPT 网页生图，效果最好）
+### A. 视频 → 工作流模式（推荐 — 用 ChatGPT 网页生图，效果最好）
 
 适合：想要 ChatGPT 网页那种最佳效果，不介意点几下鼠标完成最后一步。
 
@@ -43,13 +43,30 @@ node ~/.claude/skills/video-sketchnote/scripts/prepare.js "<URL>"
 
 然后用户在 ChatGPT 里：拖参考图 + Cmd+V 粘贴 + 回车 + 保存图。
 
-### B. 全自动模式（API 直调，效果略弱但完全自动）
+### B. 视频 → 全自动模式（API 直调）
 
 ```bash
 node ~/.claude/skills/video-sketchnote/scripts/generate.js "<URL>"
 ```
 
-调 OpenAI Responses API（gpt-5 + image_generation tool）直接生图，存到 ~/Downloads/。
+调 OpenAI Responses API（gpt-5 + gpt-image-2）直接生图，存到 ~/Downloads/。
+
+### C. PDF → 全自动模式（LlamaParse + GPT-5 + gpt-image-2）
+
+```bash
+node ~/.claude/skills/video-sketchnote/scripts/pdf-generate.js "<PDF 文件绝对路径>"
+```
+
+流水线：
+1. 上传 PDF 到 LlamaParse v2，轮询直到 `SUCCESS`，取 markdown
+2. GPT-5 把 markdown 转成 `{title, summary, chapters[{title, summary, bullets}]}` JSON 结构
+3. GPT-5 + 参考图 → 详细英文 sketchnote prompt
+4. gpt-image-2 渲染 → 保存到 `~/Downloads/sketchnote-pdf-<basename>-<ts>.png`
+
+注意：
+- 只支持有文本层的 PDF。扫描件（纯图片）会被 LlamaParse 退回（markdown 太短直接报错）。如果是扫描件，先 OCR 再来。
+- 默认 `language=ch_sim`，中英文 PDF 都能处理；输出渲染统一中文（GPT-5 会翻译）。
+- 长 PDF 会截断到前 80K 字喂 GPT-5（论文够用，整本书不够）。
 
 ---
 
