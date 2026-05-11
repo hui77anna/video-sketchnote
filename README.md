@@ -48,16 +48,24 @@ export OPENAI_API_KEY="sk-..."
 
 ### 2. 视频解析 API（必需）
 
-本工具不自己解析视频字幕，要调一个外部 API。**默认指向作者部署的 NeuraRead**（`https://daily-digest-rust.vercel.app/api/video-analyze`），你可以用环境变量覆盖到自己的部署：
+本工具不自己解析视频字幕，要调一个外部 API。**默认指向作者部署的 NeuraRead**（`https://daily-digest-rust.vercel.app/api/video-analyze`）——为防止滥用，作者部署默认开启 API key 鉴权。如果你拿到 key，配上去即可使用：
+
+```bash
+export VIDEO_API_TOKEN="作者发给你的 token"
+```
+
+或者用自己部署的实例（自部署可以不开鉴权，留空 `VIDEO_API_TOKEN` 即可）：
 
 ```bash
 export VIDEO_API_BASE="https://your-domain.com"
+export VIDEO_API_TOKEN=""    # 可选
 ```
 
 API 接口规范：
 
 ```bash
 POST {VIDEO_API_BASE}/api/video-analyze
+Headers: Authorization: Bearer {VIDEO_API_TOKEN}  # 可选
 Body: { "url": "<video_url>" }
 
 Response: {

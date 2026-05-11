@@ -17,6 +17,7 @@ if (!OPENAI_KEY) {
 }
 
 const VIDEO_API = process.env.VIDEO_API_BASE || 'https://daily-digest-rust.vercel.app'
+const VIDEO_API_TOKEN = process.env.VIDEO_API_TOKEN || ''
 const SKILL_DIR = path.dirname(path.dirname(__filename))
 // 参考图查找顺序：命令行参数 > skill 目录里的 reference.png/jpg > 无参考
 function loadReferenceImage() {
@@ -43,7 +44,10 @@ function loadReferenceImage() {
   console.log('[1/3] 调 NeuraRead API 解析视频章节...')
   const aRes = await fetch(`${VIDEO_API}/api/video-analyze`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(VIDEO_API_TOKEN ? { 'Authorization': `Bearer ${VIDEO_API_TOKEN}` } : {}),
+    },
     body: JSON.stringify({ url }),
     signal: AbortSignal.timeout(180000),
   })

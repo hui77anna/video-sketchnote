@@ -13,6 +13,7 @@ if (!url) {
 }
 
 const VIDEO_API = process.env.VIDEO_API_BASE || 'https://daily-digest-rust.vercel.app'
+const VIDEO_API_TOKEN = process.env.VIDEO_API_TOKEN || ''
 const SKILL_DIR = path.dirname(path.dirname(__filename))
 const REFERENCE_PATH = path.join(SKILL_DIR, 'reference.png')
 const USER_DATA_DIR = path.join(SKILL_DIR, 'chrome-profile')
@@ -23,7 +24,10 @@ const DOWNLOADS_DIR = path.join(os.homedir(), 'Downloads')
   console.log('[1/5] 解析视频章节...')
   const aRes = await fetch(`${VIDEO_API}/api/video-analyze`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(VIDEO_API_TOKEN ? { 'Authorization': `Bearer ${VIDEO_API_TOKEN}` } : {}),
+    },
     body: JSON.stringify({ url }),
     signal: AbortSignal.timeout(180000),
   })

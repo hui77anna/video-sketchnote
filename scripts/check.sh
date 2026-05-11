@@ -25,10 +25,16 @@ if [ -n "${OPENAI_API_KEY:-}" ]; then
   [ "$RESP" = "200" ] && pass "OpenAI 账号能访问 gpt-5" || fail "OpenAI 返回 HTTP $RESP（key 错 / 没开 gpt-5 / 没充值）"
 fi
 
-# 6. 视频解析服务活着吗（可通过 VIDEO_API_BASE 覆盖默认地址）
+# 6. 视频解析服务活着吗（可通过 VIDEO_API_BASE / VIDEO_API_TOKEN 覆盖）
 VIDEO_API="${VIDEO_API_BASE:-https://daily-digest-rust.vercel.app}"
-NEURA=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "${VIDEO_API}/api/video-analyze" 2>/dev/null || echo "000")
-[ "${NEURA:-000}" != "000" ] && pass "视频解析服务可达 ${VIDEO_API}（HTTP ${NEURA}）" || fail "视频解析服务连不上 ${VIDEO_API}（视频模式会崩，PDF 模式不受影响）"
+AUTH_HEADER=""
+[ -n "${VIDEO_API_TOKEN:-}" ] && AUTH_HEADER="-H Authorization: Bearer ${VIDEO_API_TOKEN}"
+NEURA=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 $AUTH_HEADER "${VIDEO_API}/api/video-analyze" 2>/dev/null || echo "000")
+case "$NEURA" in
+  401|403) fail "视频解析服务返回 ${NEURA}（VIDEO_API_TOKEN 缺失或错误）" ;;
+  000)     fail "视频解析服务连不上 ${VIDEO_API}（视频模式会崩，PDF 模式不受影响）" ;;
+  *)       pass "视频解析服务可达 ${VIDEO_API}（HTTP ${NEURA}）" ;;
+esac
 
 echo "---"
 [ "$FAILED" = "0" ] && echo "🎉 全通过，可以发给领导了" || echo "⚠️  有问题先修上面的红色项"
