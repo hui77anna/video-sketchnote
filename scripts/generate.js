@@ -199,32 +199,52 @@ function loadReferenceImage() {
 
   // ========== Step B: gpt-image-2 渲染（严格模式：只用最强模型，不降级）==========
   console.log('  [Step B] gpt-image-2 渲染（严格模式，不降级）...')
-  const imgRes = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${OPENAI_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-image-2',
-      prompt: detailedPrompt,
-      n: 1,
-      size: '1024x1536',
-      quality: 'high',
-    }),
-    signal: AbortSignal.timeout(540000),
-  })
-
-  if (!imgRes.ok) {
-    const t = await imgRes.text().catch(() => '')
-    console.error(`✗ gpt-image-2 渲染失败 HTTP ${imgRes.status}: ${t.slice(0, 300)}`)
-    console.error('（严格模式：不降级到 chatgpt-image-latest / 1.5 / 1，请修复后重试）')
-    process.exit(1)
+  const MAX_ATTEMPTS = 3
+  let imgB64 = null
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const imgRes = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-image-2',
+          prompt: detailedPrompt,
+          n: 1,
+          size: '1024x1536',
+          quality: 'high',
+        }),
+        signal: AbortSignal.timeout(540000),
+      })
+      if (!imgRes.ok) {
+        const t = await imgRes.text().catch(() => '')
+        const transient = imgRes.status >= 500 || imgRes.status === 429
+        console.error(`✗ gpt-image-2 第 ${attempt}/${MAX_ATTEMPTS} 次失败 HTTP ${imgRes.status}: ${t.slice(0, 200)}`)
+        if (!transient || attempt === MAX_ATTEMPTS) {
+          console.error('（严格模式：不降级到 chatgpt-image-latest / 1.5 / 1，请修复后重试）')
+          process.exit(1)
+        }
+      } else {
+        const imgData = await imgRes.json()
+        imgB64 = imgData.data?.[0]?.b64_json
+        if (imgB64) break
+        console.error(`✗ 第 ${attempt}/${MAX_ATTEMPTS} 次没返回 b64_json`)
+      }
+    } catch (e) {
+      console.error(`✗ 第 ${attempt}/${MAX_ATTEMPTS} 次网络错: ${e.message || e}`)
+      if (attempt === MAX_ATTEMPTS) {
+        console.error('（已重试 3 次仍失败，请检查网络或稍后再试）')
+        process.exit(1)
+      }
+    }
+    const wait = attempt * 10000
+    console.log(`  ⏳ 等 ${wait / 1000}s 后重试...`)
+    await new Promise(r => setTimeout(r, wait))
   }
-  const imgData = await imgRes.json()
-  const imgB64 = imgData.data?.[0]?.b64_json
   if (!imgB64) {
-    console.error('✗ gpt-image-2 没返回 b64_json')
+    console.error('✗ 重试用尽，仍没拿到图')
     process.exit(1)
   }
 
