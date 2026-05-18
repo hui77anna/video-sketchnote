@@ -69,28 +69,18 @@ function loadReferenceImage() {
   const highlights = data.highlights || []
   const transcript = data.transcript || ''
 
-  // ===== 内容门槛：按时长分档（短视频信息密度天然低，门槛宽松）=====
-  // < 60s: 400 字
-  // >= 60s: 1000 字
-  // 时长缺失（=0）按严格档处理
   const chapterTextTotal = chapters.reduce((sum, c) => {
     return sum + (c.title || '').length + (c.summary || '').length +
       ((c.bullets || []).join('').length)
   }, 0)
   const totalContent = chapterTextTotal + transcript.length + summary.length
-  const threshold = durationSec > 0 && durationSec < 60 ? 400 : 1000
-  if (totalContent < threshold) {
-    const dStr = durationSec > 0 ? `${durationSec}s` : '未知'
-    console.error(`✗ 视频内容不足以生成手账图（总内容 ${totalContent} 字 < ${threshold} 字门槛，视频时长 ${dStr}）：`)
-    console.error(`  - 章节内容: ${chapterTextTotal} 字`)
-    console.error(`  - transcript: ${transcript.length} 字`)
-    console.error(`  - summary: ${summary.length} 字`)
-    console.error(`\n建议：先去 https://daily-digest-rust.vercel.app/video 完整解析这个视频。`)
+  if (totalContent < 100) {
+    console.error(`✗ 视频解析返回内容近乎为空（${totalContent} 字），无法生成。可能是解析失败或视频私密。`)
     process.exit(1)
   }
   console.log(`  ✓ 标题: ${title.slice(0, 40)}`)
-  console.log(`  ✓ 时长: ${durationSec || '?'}s, 门槛: ${threshold} 字`)
-  console.log(`  ✓ 章节: ${chapters.length} 段, transcript: ${transcript.length} 字, highlights: ${highlights.length} 条, 章节内容: ${chapterTextTotal} 字`)
+  console.log(`  ✓ 时长: ${durationSec || '?'}s`)
+  console.log(`  ✓ 章节: ${chapters.length} 段, transcript: ${transcript.length} 字, highlights: ${highlights.length} 条, 章节内容: ${chapterTextTotal} 字, 总计: ${totalContent} 字`)
 
   // 2. 拼 prompt — 包含完整信息（标题+整体摘要+章节+亮点+transcript）
   const items = chapters.map((c, i) => {

@@ -1,8 +1,15 @@
 # video-sketchnote
 
-> 一句话：给一个视频/播客链接，自动生成一张手绘风格的总结图片，复刻 ChatGPT 网页生图体验。
+> 一句话：给一个视频/PDF/原理话题，自动生成 1–5 张手绘风格总结图，默认产出"内容总结 + 事实核查"双图。
 
-支持平台：YouTube · 抖音 · 小红书 · B 站 · 小宇宙播客 · 微信视频号
+**支持输入**：视频 URL（YouTube · 抖音 · 小红书 · B 站 · 小宇宙播客 · 微信视频号）· 本地 PDF · 公认原理话题
+
+**5 种图（按需触发）**：
+1. 📓 内容总结图（默认）
+2. 🔍 事实核查结论图（默认）
+3. ⚖️ 原理行动图（横版，用户说"原理图"时触发）
+4. 💪 操作手册-训练篇（用户说"详细补充"时触发）
+5. 🍴 操作手册-饮食习惯篇（同上）
 
 ![demo](reference.png)
 
@@ -79,17 +86,23 @@ Response: {
 
 如果你有自己的视频解析方案，包成这个接口格式即可。
 
-### 3. 参考图（强烈推荐）
+### 3. LlamaParse API（可选 — 仅 PDF 模式需要）
 
-把一张你喜欢的手账风样图（小红书手账、ChatGPT 出过的好图等）放到：
+如果你要把 PDF 转手账图，去 https://cloud.llamaindex.ai 申请，免费 1000 页/月：
 
+```bash
+export LLAMA_CLOUD_API_KEY="llx-..."
 ```
-./reference.png
-```
 
-也支持 .jpg / .jpeg / .webp。不放也能跑，但视觉风格会跑偏。
+只用视频模式可跳过。
 
-### 4. 安装依赖
+### 4. 参考图（已内嵌，不要替换）
+
+仓库自带 `reference.png` 作为统一风格参考图。脚本自动读取它喂给 GPT-5，所有用户出图风格一致。
+
+**不要替换它**——替换后出图会跑偏（英文标题、少彩色、信息密度低）。如果误删，`git checkout reference.png` 恢复。
+
+### 5. 安装依赖
 
 ```bash
 npm install
@@ -99,35 +112,85 @@ npm install
 
 ---
 
-## 用法 A — 命令行直调
+## 用法 A — 命令行直调（5 种脚本）
+
+### A1. 视频 → 总结图
 
 ```bash
 node scripts/generate.js "https://www.xiaohongshu.com/discovery/item/..."
 ```
 
-脚本会：
-1. 调视频解析 API 拿章节
-2. GPT-5 转写为详细英文 prompt
-3. gpt-image-2 渲染
-4. 保存到 `~/Downloads/sketchnote-<时间戳>.png`
+→ `~/Downloads/sketchnote-<ts>.png`（竖版 1024×1536）
+
+### A2. PDF → 总结图
+
+```bash
+node scripts/pdf-generate.js "/绝对路径/paper.pdf"
+```
+
+→ `~/Downloads/sketchnote-pdf-<basename>-<ts>.png`
+仅支持有文本层的 PDF。扫描件先 OCR。
+
+### A3. 事实核查结论图
+
+跑完 A1 之后，把核查结论文本（结构见 `SKILL.md`）喂给：
+
+```bash
+echo "<核查文本>" | node scripts/audit-generate.js
+# 或
+node scripts/audit-generate.js -f /tmp/audit-content.txt
+```
+
+→ `~/Downloads/sketchnote-audit-<ts>.png`，含 ✅⚠️❓✗ 标记
+
+### A4. 原理 + 行动横版图
+
+```bash
+node scripts/principle-action-generate.js -f /tmp/principle-content.txt
+```
+
+→ `~/Downloads/sketchnote-principle-<ts>.png`（横版 1536×1024）
+左半画原理 metaphor（洋葱/冰山/漏斗），右半画具体行动 1:1 对应。
+
+### A5. 操作手册图（训练篇 + 饮食篇）
+
+```bash
+node scripts/action-manual-generate.js -f /tmp/manual-training.txt --suffix training
+node scripts/action-manual-generate.js -f /tmp/manual-diet.txt --suffix diet
+```
+
+→ `~/Downloads/sketchnote-manual-training-<ts>.png` + `sketchnote-manual-diet-<ts>.png`
+每个行动卡片带具体数字/频率/食物源/动作名。
 
 ---
 
-## 用法 B — Claude Code skill
+## 用法 B — Claude Code skill（推荐）
 
-把整个目录 clone 到 `~/.claude/skills/video-sketchnote/`：
+把整个仓库 clone 到 `~/.claude/skills/video-sketchnote/`：
 
 ```bash
-git clone <your-repo-url> ~/.claude/skills/video-sketchnote
+git clone https://github.com/hui77anna/video-sketchnote.git ~/.claude/skills/video-sketchnote
 cd ~/.claude/skills/video-sketchnote
 npm install
+```
+
+环境变量写进 `~/.zshrc`：
+
+```bash
+export OPENAI_API_KEY="sk-..."
+export VIDEO_API_TOKEN="<向作者索取>"
+export LLAMA_CLOUD_API_KEY="llx-..."   # 可选，PDF 模式才需要
 ```
 
 然后在 Claude Code 里直接说：
 
 > 「帮我用 video-sketchnote 生成手绘总结：https://...」
+>
+> 或：「这个视频核查一下出张原理图：https://...」（→ 自动出 3 张图）
+>
+> 或：「再详细补充操作手册」（→ 追加 2 张手册图）
 
-Claude Code 会自动识别 skill，跑脚本，用 Read 工具打开图片描述给你看。
+Claude Code 自动识别意图，跑对应脚本组合，用 Read 工具打开图片描述给你看。完整触发词矩阵见 [SKILL.md](./SKILL.md)。
 
 ---
 
@@ -207,14 +270,19 @@ gpt-image-1          ← 旧版兜底
 
 ```
 video-sketchnote/
-├── README.md             ← 你正在看
-├── SKILL.md              ← Claude Code skill 入口（声明触发词 + 流程）
+├── README.md                            ← 你正在看
+├── SKILL.md                             ← Claude Code skill 入口（触发词 + 完整流程）
 ├── package.json
-├── reference.png         ← 风格参考图（用户可替换）
+├── reference.png                        ← 风格参考图（已内嵌，勿替换）
 └── scripts/
-    ├── generate.js       ← 用法 A：命令行直调
-    ├── prepare.js        ← 用法 C：半自动
-    └── automate.js       ← 用法 D：Playwright 全自动
+    ├── generate.js                      ← 视频 → 总结图
+    ├── pdf-generate.js                  ← PDF → 总结图
+    ├── audit-generate.js                ← 核查结论图
+    ├── principle-action-generate.js     ← 原理行动横版图
+    ├── action-manual-generate.js        ← 操作手册图（训练/饮食）
+    ├── prepare.js                       ← 半自动 ChatGPT 网页模式
+    ├── automate.js                      ← Playwright 全自动模式
+    └── check.sh                         ← 环境自检脚本
 ```
 
 ---
