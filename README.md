@@ -164,15 +164,23 @@ node scripts/action-manual-generate.js -f /tmp/manual-diet.txt --suffix diet
 
 ---
 
-## 用法 B — Claude Code skill（推荐）
+## 用法 B — Claude Code / OpenClaw skill（推荐）
 
-把整个仓库 clone 到 `~/.claude/skills/video-sketchnote/`：
+**Claude Code 用户**：
 
 ```bash
 git clone https://github.com/hui77anna/video-sketchnote.git ~/.claude/skills/video-sketchnote
-cd ~/.claude/skills/video-sketchnote
-npm install
+cd ~/.claude/skills/video-sketchnote && npm install
 ```
+
+**OpenClaw 用户**（🦞 lobster way，373k+ stars 的开源 Agent 平台）：
+
+```bash
+git clone https://github.com/hui77anna/video-sketchnote.git ~/.openclaw/skills/video-sketchnote
+cd ~/.openclaw/skills/video-sketchnote && npm install
+```
+
+两个工具的 skill 格式完全相同（YAML frontmatter + markdown），脚本用 `__dirname` 动态定位，install 路径不影响功能。
 
 环境变量写进 `~/.zshrc`：
 

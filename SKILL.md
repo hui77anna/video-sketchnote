@@ -5,6 +5,8 @@ description: 把视频 URL / PDF / 公认原理话题生成手绘图。默认出
 
 # 视频/PDF 手绘总结生成 Skill
 
+> **安装路径说明（给 AI 看）**：本 skill 同时兼容 Claude Code 和 OpenClaw。下方所有 `~/.claude/skills/video-sketchnote/` 是 Claude Code 的默认路径，OpenClaw 用户请自动替换为 `~/.openclaw/skills/video-sketchnote/`。脚本内部用 `__dirname` 动态定位，无论装在哪都能跑通。
+
 ## 用途（默认产出双图）
 两种输入模式：
 - **视频/播客 URL** → 调 NeuraRead 拿章节 → 出 **图 1：视频内容总结手账图** → 自动跑 claim-check 流程 → 出 **图 2：事实核查结论手账图**

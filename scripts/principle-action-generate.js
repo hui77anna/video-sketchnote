@@ -79,7 +79,7 @@ async function readInput() {
 
   const ref = loadRef()
   if (!ref) {
-    console.error('✗ 必须放参考图：~/.claude/skills/video-sketchnote/reference.png')
+    console.error(`✗ 必须放参考图：${path.join(SKILL_DIR, 'reference.png')}`)
     process.exit(1)
   }
 

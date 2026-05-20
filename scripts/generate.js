@@ -111,7 +111,7 @@ function loadReferenceImage() {
   // ===== 严格模式：必须有参考图，否则直接拒绝 =====
   const ref = loadReferenceImage()
   if (!ref) {
-    console.error('✗ 必须放参考图：~/.claude/skills/video-sketchnote/reference.png')
+    console.error(`✗ 必须放参考图：${path.join(SKILL_DIR, 'reference.png')}`)
     console.error('  没有参考图无法保证风格一致性，按用户要求严格模式不允许跳过此步。')
     process.exit(1)
   }

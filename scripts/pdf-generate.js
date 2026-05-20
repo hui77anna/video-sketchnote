@@ -203,7 +203,7 @@ async function extractChapters(markdown) {
 
   const ref = loadReferenceImage()
   if (!ref) {
-    console.error('✗ 必须放参考图：~/.claude/skills/video-sketchnote/reference.png')
+    console.error(`✗ 必须放参考图：${path.join(SKILL_DIR, 'reference.png')}`)
     process.exit(1)
   }
   console.log(`[3/4] 参考图: ${ref.path} → GPT-5 转写为详细英文 prompt...`)
