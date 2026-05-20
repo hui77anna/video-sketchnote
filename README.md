@@ -1,15 +1,14 @@
 # video-sketchnote
 
-> 一句话：给一个视频/PDF/原理话题，自动生成 1–5 张手绘风格总结图。**默认只出 1 张总结图，其他图按关键词追加**（opt-in 模式）。
+> 一句话：给一个视频/PDF，自动生成 1–4 张手绘风格总结图。**默认只出 1 张总结图，其他图按关键词追加**（opt-in 模式）。
 
-**支持输入**：视频 URL（YouTube · 抖音 · 小红书 · B 站 · 小宇宙播客 · 微信视频号）· 本地 PDF · 公认原理话题
+**支持输入**：视频 URL（YouTube · 抖音 · 小红书 · B 站 · 小宇宙播客 · 微信视频号）· 本地 PDF
 
-**5 种图（按关键词触发）**：
+**4 种图（按关键词触发）**：
 1. 📓 **内容总结图** — 默认出（一定有）
 2. 🔍 **事实核查结论图** — 说"核查 / 查证 / 事实核查 / 靠谱吗"才追加
-3. ⚖️ **原理行动图（横版）** — 说"原理图 / 第一性原理 / 该做什么不该做"才追加
-4. 💪 **操作手册-训练篇** — 说"详细补充 / 手册 / 深一点"才追加
-5. 🍴 **操作手册-饮食习惯篇** — 同 4
+3. 💪 **操作手册-训练篇** — 说"详细补充 / 手册 / 深一点"才追加
+4. 🍴 **操作手册-饮食习惯篇** — 同 3
 
 ![demo](reference.png)
 
@@ -143,16 +142,7 @@ node scripts/audit-generate.js -f /tmp/audit-content.txt
 
 → `~/Downloads/sketchnote-audit-<ts>.png`，含 ✅⚠️❓✗ 标记
 
-### A4. 原理 + 行动横版图
-
-```bash
-node scripts/principle-action-generate.js -f /tmp/principle-content.txt
-```
-
-→ `~/Downloads/sketchnote-principle-<ts>.png`（横版 1536×1024）
-左半画原理 metaphor（洋葱/冰山/漏斗），右半画具体行动 1:1 对应。
-
-### A5. 操作手册图（训练篇 + 饮食篇）
+### A4. 操作手册图（训练篇 + 饮食篇）
 
 ```bash
 node scripts/action-manual-generate.js -f /tmp/manual-training.txt --suffix training
@@ -194,7 +184,7 @@ export LLAMA_CLOUD_API_KEY="llx-..."   # 可选，PDF 模式才需要
 
 > 「帮我用 video-sketchnote 生成手绘总结：https://...」
 >
-> 或：「这个视频核查一下出张原理图：https://...」（→ 自动出 3 张图）
+> 或：「这个视频核查一下：https://...」（→ 出 2 张图，含核查）
 >
 > 或：「再详细补充操作手册」（→ 追加 2 张手册图）
 
@@ -286,7 +276,6 @@ video-sketchnote/
     ├── generate.js                      ← 视频 → 总结图
     ├── pdf-generate.js                  ← PDF → 总结图
     ├── audit-generate.js                ← 核查结论图
-    ├── principle-action-generate.js     ← 原理行动横版图
     ├── action-manual-generate.js        ← 操作手册图（训练/饮食）
     ├── prepare.js                       ← 半自动 ChatGPT 网页模式
     ├── automate.js                      ← Playwright 全自动模式
