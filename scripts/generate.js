@@ -4,11 +4,18 @@ const fs = require('fs')
 const path = require('path')
 const os = require('os')
 
-const url = process.argv[2]
+// 从 argv[2] 里抽出第一个 http(s) URL — 适配用户从小红书/抖音 app 整段复制
+// （比如："40 【...】 😆 Z14U 😆 https://www.xiaohongshu.com/discovery/item/..."）
+const rawInput = process.argv[2] || ''
+const urlMatch = rawInput.match(/https?:\/\/[^\s一-龥]+/)
+const url = urlMatch ? urlMatch[0] : rawInput
 const refArg = process.argv[3]
-if (!url) {
-  console.error('用法: generate.js <video_url> [reference_image_path]')
+if (!url || !/^https?:/.test(url)) {
+  console.error('用法: generate.js "<video_url 或包含 URL 的整段文本>" [reference_image_path]')
   process.exit(1)
+}
+if (urlMatch && rawInput !== url) {
+  console.log(`  ℹ️  从整段文本里提取到 URL: ${url.slice(0, 70)}...`)
 }
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY
