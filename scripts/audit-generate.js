@@ -187,6 +187,9 @@ async function readInput() {
   const fp = path.join(outDir, `sketchnote-audit-${Date.now()}.png`)
   fs.writeFileSync(fp, Buffer.from(imgB64, 'base64'))
   console.log(`✅ ${fp}`)
+  if (process.platform === 'darwin' && !process.env.SKETCHNOTE_NO_OPEN) {
+    try { require('child_process').spawn('open', [fp], { detached: true, stdio: 'ignore' }).unref(); console.log('🖼  已在 Preview 中弹出') } catch (_) {}
+  }
 })().catch(e => {
   console.error('未捕获错误:', e.message)
   process.exit(1)

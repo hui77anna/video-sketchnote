@@ -247,6 +247,15 @@ function loadReferenceImage() {
   console.log('  ✓ 模型: gpt-5 (转写) + gpt-image-2 (渲染)')
   console.log('[3/3] 保存完成')
   console.log(`✅ ${fp}`)
+
+  // 自动弹出图片（macOS 用 Preview 打开，绕过 agent UI 转发问题）
+  // 跳过条件: SKETCHNOTE_NO_OPEN=1（CI / 自动化场景）
+  if (process.platform === 'darwin' && !process.env.SKETCHNOTE_NO_OPEN) {
+    try {
+      require('child_process').spawn('open', [fp], { detached: true, stdio: 'ignore' }).unref()
+      console.log('🖼  已在 Preview 中弹出')
+    } catch (_) { /* 忽略，不阻断主流程 */ }
+  }
 })().catch(e => {
   console.error('未捕获错误:', e.message)
   process.exit(1)
