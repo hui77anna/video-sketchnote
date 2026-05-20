@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('./_load-env')
 // PDF 分支：LlamaParse 解析 PDF → GPT-5 提章节 → gpt-image-2 出手绘总结图
 // 复用 video 流水线后半段（sketchnote 转写 prompt + gpt-image-2 渲染）
 const fs = require('fs')

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('./_load-env')
 // 工作流模式：解析视频 → 把 prompt 复制到剪贴板 → 打开 ChatGPT 网页 + 参考图
 // 用户在 ChatGPT 里 Cmd+V 贴文字 + 拖参考图 + 等生图 + 保存
 const fs = require('fs')

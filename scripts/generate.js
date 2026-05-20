@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('./_load-env')
 const fs = require('fs')
 const path = require('path')
 const os = require('os')

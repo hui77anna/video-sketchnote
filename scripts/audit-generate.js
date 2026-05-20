@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require('./_load-env')
 // audit-generate.js — 生成"事实核查结论"版手账图
 // 输入：核查后的中文内容（通过 -f 文件路径 或 stdin 喂入）
 // 输出：~/Downloads/sketchnote-audit-<ts>.png

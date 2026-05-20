@@ -5,6 +5,10 @@ pass() { printf "\033[32m✅\033[0m %s\n" "$1"; }
 fail() { printf "\033[31m❌\033[0m %s\n" "$1"; FAILED=1; }
 FAILED=0
 
+# 自动加载 env 文件（不依赖 .zshrc / 父 shell 是否 source）
+# 适配 OpenClaw / Cursor 等会在每条命令开 fresh shell 的 agent 环境
+[ -f "$HOME/.video-sketchnote-env.sh" ] && source "$HOME/.video-sketchnote-env.sh"
+
 # 1. node 版本
 NODE_VER=$(node -v 2>/dev/null | sed 's/v//' | cut -d. -f1)
 [ "${NODE_VER:-0}" -ge 18 ] && pass "node $(node -v)" || fail "node 缺失或 < 18（brew install node）"
@@ -27,11 +31,14 @@ fi
 
 # 6. 视频解析服务活着吗（可通过 VIDEO_API_BASE / VIDEO_API_TOKEN 覆盖）
 VIDEO_API="${VIDEO_API_BASE:-https://daily-digest-rust.vercel.app}"
-AUTH_HEADER=""
-[ -n "${VIDEO_API_TOKEN:-}" ] && AUTH_HEADER="-H Authorization: Bearer ${VIDEO_API_TOKEN}"
-NEURA=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 $AUTH_HEADER "${VIDEO_API}/api/video-analyze" 2>/dev/null || echo "000")
+# 用数组传 curl 参数，避免 $VAR 词法分割破坏 Authorization 头
+CURL_ARGS=(-s -o /dev/null -w "%{http_code}" --max-time 10 -X POST
+           -H "Content-Type: application/json"
+           -d '{"url":"https://www.youtube.com/watch?v=dQw4w9WgXcQ"}')
+[ -n "${VIDEO_API_TOKEN:-}" ] && CURL_ARGS+=(-H "Authorization: Bearer ${VIDEO_API_TOKEN}")
+NEURA=$(curl "${CURL_ARGS[@]}" "${VIDEO_API}/api/video-analyze" 2>/dev/null || echo "000")
 case "$NEURA" in
-  401|403) fail "视频解析服务返回 ${NEURA}（VIDEO_API_TOKEN 缺失或错误）" ;;
+  401|403) fail "视频解析服务返回 ${NEURA}（VIDEO_API_TOKEN 缺失或错误 — 检查 ~/.video-sketchnote-env.sh）" ;;
   000)     fail "视频解析服务连不上 ${VIDEO_API}（视频模式会崩，PDF 模式不受影响）" ;;
   *)       pass "视频解析服务可达 ${VIDEO_API}（HTTP ${NEURA}）" ;;
 esac
